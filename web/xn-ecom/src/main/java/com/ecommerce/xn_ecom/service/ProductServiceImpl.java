@@ -10,6 +10,10 @@ import java.util.UUID;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,50 +67,70 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ProductResponse getAllProducts() {
-    // Validations: check if products list is empty
+  public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder) {
+    // Validations [optional]: check if products list is empty
     
-    List<Product> products = productRepository.findAll();
+    Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortedBy).ascending() : Sort.by(sortedBy).descending();
     
-    if (products.isEmpty()) {
-      throw new APIException("Such empty :((");
-    }
+    Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    
+    Page<Product> productPage = productRepository.findAll(pageDetails);
+    
+    List<Product> products = productPage.getContent();
+    
+    // if (products.isEmpty()) {
+    //   throw new APIException("Such empty :((");
+    // }
     
     List<ProductDTO> productDTOs = products.stream().map(product -> modelMapper.map(product, ProductDTO.class)).toList();
 
-    return new ProductResponse(productDTOs);
+    ProductResponse productResponse = new ProductResponse();
+    productResponse.setContent(productDTOs);
+    productResponse.setPageNumber(productPage.getNumber());
+    productResponse.setPageSize(productPage.getSize());
+    productResponse.setTotalElements(productPage.getTotalElements());
+    productResponse.setTotalPages(productPage.getTotalPages());
+    productResponse.setLastPage(productPage.isLast());
+    
+    return productResponse;
   }
 
   @Override
   public ProductResponse findByCategory(Long categoryId) {
     Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
-    // Validations: check if products list is empty
+    // Validations [optional]: check if products list is empty
     
     List<Product> products = productRepository.findByCategoryOrderByPriceAsc(category);
     
-    if (products.isEmpty()) {
-      throw new APIException("Such empty :((");
-    }
+    // if (products.isEmpty()) {
+    //   throw new APIException("Such empty :((");
+    // }
     
     List<ProductDTO> productDTOs = products.stream().map(product -> modelMapper.map(product, ProductDTO.class)).toList();
 
-    return new ProductResponse(productDTOs);
+    ProductResponse productResponse = new ProductResponse();
+    productResponse.setContent(productDTOs);
+    
+    return productResponse;
   }
 
   @Override
   public ProductResponse findByKeyword(String keyword) {
-    // validation: check if products list is empty
+    // validation [optional]: check if products list is empty
     
     List<Product> products = productRepository.findByProductNameLikeIgnoreCase('%' + keyword + '%');
     
-    if (products.isEmpty()) {
-      throw new APIException("Such empty :((");
-    }
+    // if (products.isEmpty()) {
+    //   throw new APIException("Such empty :((");
+    // }
     
     List<ProductDTO> productDTOs = products.stream().map(product -> modelMapper.map(product, ProductDTO.class)).toList();
 
-    return new ProductResponse(productDTOs);
+    ProductResponse productResponse = new ProductResponse();
+    productResponse.setContent(productDTOs);
+    
+    return productResponse;
   }
 
   @Override
