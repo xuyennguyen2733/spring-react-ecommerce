@@ -13,9 +13,9 @@ public interface ProductService {
 
   ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder);
 
-  ProductResponse findByCategory(Long categoryId);
+  ProductResponse findByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder);
 
-  ProductResponse findByKeyword(String keyword);
+  ProductResponse findByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder);
 
   ProductDTO updateProduct(Long productId, ProductDTO productDTO);
 

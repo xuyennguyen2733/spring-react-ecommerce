@@ -96,12 +96,18 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ProductResponse findByCategory(Long categoryId) {
+  public ProductResponse findByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder) {
     Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
     // Validations [optional]: check if products list is empty
     
-    List<Product> products = productRepository.findByCategoryOrderByPriceAsc(category);
+     Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortedBy).ascending() : Sort.by(sortedBy).descending();
+    
+    Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    
+    Page<Product> productPage = productRepository.findByCategory(category, pageDetails);
+    
+    List<Product> products = productPage.getContent();
     
     // if (products.isEmpty()) {
     //   throw new APIException("Such empty :((");
@@ -111,15 +117,27 @@ public class ProductServiceImpl implements ProductService {
 
     ProductResponse productResponse = new ProductResponse();
     productResponse.setContent(productDTOs);
+    productResponse.setPageNumber(productPage.getNumber());
+    productResponse.setPageSize(productPage.getSize());
+    productResponse.setTotalElements(productPage.getTotalElements());
+    productResponse.setTotalPages(productPage.getTotalPages());
+    productResponse.setLastPage(productPage.isLast());
     
     return productResponse;
+    
   }
 
   @Override
-  public ProductResponse findByKeyword(String keyword) {
+  public ProductResponse findByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortedBy, String sortOrder) {
     // validation [optional]: check if products list is empty
     
-    List<Product> products = productRepository.findByProductNameLikeIgnoreCase('%' + keyword + '%');
+    Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortedBy).ascending() : Sort.by(sortedBy).descending();
+    
+    Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    
+    Page<Product> productPage = productRepository.findByProductNameLikeIgnoreCase('%' + keyword + '%', pageDetails);
+    
+    List<Product> products = productPage.getContent();
     
     // if (products.isEmpty()) {
     //   throw new APIException("Such empty :((");
@@ -129,6 +147,11 @@ public class ProductServiceImpl implements ProductService {
 
     ProductResponse productResponse = new ProductResponse();
     productResponse.setContent(productDTOs);
+    productResponse.setPageNumber(productPage.getNumber());
+    productResponse.setPageSize(productPage.getSize());
+    productResponse.setTotalElements(productPage.getTotalElements());
+    productResponse.setTotalPages(productPage.getTotalPages());
+    productResponse.setLastPage(productPage.isLast());
     
     return productResponse;
   }
